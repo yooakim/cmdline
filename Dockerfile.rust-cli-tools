@@ -1,0 +1,32 @@
+FROM rust:latest AS build
+
+# Set up the working directory
+WORKDIR /usr/src
+
+RUN DEBIAN_FRONTEND=noninteractive && \
+apt-get update && \
+apt-get dist-upgrade && \
+apt-get -qq install curl cmake
+
+# Build and install Rust CLI tools
+# Install the tools we want
+RUN cargo install ripgrep \
+    cargo-update \
+    du-dust \
+    grex \
+    xsv \
+    starship \
+    lsd \
+    ffsend -f \
+    dysk \
+    macchina \
+    ouch
+
+# --- Runtime Stage ---
+FROM debian:bullseye-slim
+
+# Copy all binaries from build stage to /usr/local/bin in the runtime container
+COPY --from=build /usr/local/cargo/bin/ /usr/local/bin/
+
+# Set default command, for example:
+CMD ["lsd","-l","/usr/local/bin/"]
